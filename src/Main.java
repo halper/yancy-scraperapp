@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -44,10 +45,12 @@ public class Main {
     private static final Logger logger = Logger.getLogger(Main.class);
     private static AtomicInteger banCounter;
     private static ProxyHolder ph;
+    private static List<Proxy> badProxies;
 
     public static void main(String[] args) {
         logger.info("System initialized!");
         banCounter = new AtomicInteger(0);
+        badProxies = new ArrayList<>();
         ph = ProxyHolder.getInstance();
         ExecutorService executorService = Executors.newFixedThreadPool(500);
         init = false;
@@ -110,6 +113,7 @@ public class Main {
         getProductURLsFromDB();
         changeProxyIfRequired();
         getRecentProductURLS(executorService);
+        if(banned()) initScraper(executorService);
         if (!init) {
             init = true;
             List<String> productUrls = new ArrayList<>(dbProductURLsMap.keySet());
@@ -128,6 +132,9 @@ public class Main {
     }
 
     private static void changeProxy() {
+        if(init && banned()) {
+            badProxies.add(ProxyHolder.getInstance().getProxy());
+        }
         String sql = "SELECT host, port FROM proxies ORDER BY RAND() LIMIT 1";
         try (Connection connection = DataSource.getInstance().getBds().getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -135,16 +142,20 @@ public class Main {
             while (rs.next()) {
                 String host = rs.getString("host");
                 int port = rs.getInt("port");
-                ph.setProxy(host, port);
-                logger.info("Proxy has set to: " + host + ":" + port);
+                logger.info("Proxy is set to: " + host + ":" + port);
+                banCounter.set(0);
+                logger.info("Ban counter has reset!");
+                ProxyHolder.getInstance().setProxy(host, port);
             }
         } catch (SQLException e) {
             logger.error("SQL Error for change proxy!\n", e);
         }
+        if(badProxies.contains(ProxyHolder.getInstance().getProxy()))
+            changeProxy();
     }
 
     private static boolean banned() {
-        return banCounter.get() >= siteURLs.size() * 0.8;
+        return banCounter.get() >= siteURLs.size() * 0.3;
     }
 
     private static void getRecentProductURLS(ExecutorService executorService) {

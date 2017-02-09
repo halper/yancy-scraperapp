@@ -1,4 +1,5 @@
 import org.apache.commons.dbcp2.BasicDataSource;
+import utilities.MySQLProperties;
 
 /**
  * Created by alper on 1/19/17.

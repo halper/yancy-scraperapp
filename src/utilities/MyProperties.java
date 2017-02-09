@@ -1,3 +1,5 @@
+package utilities;
+
 import org.apache.log4j.Logger;
 
 import java.io.FileInputStream;

@@ -5,6 +5,8 @@ import utilities.ConnectionHandler;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.concurrent.Callable;
 
 /**
@@ -13,17 +15,24 @@ import java.util.concurrent.Callable;
 
 class ProductXMLParser implements Callable {
     private ProductURL productURL;
+    private URL XMLURL;
     private static final Logger logger = Logger.getLogger( ProductXMLParser.class );
+
 
     ProductXMLParser(ProductURL productUrl) {
         this.productURL = productUrl;
+        try {
+            this.XMLURL = new URL(productURL.getUrlString() + ".xml");
+        } catch (MalformedURLException e) {
+            logger.error("MalformedURL Exc for ProductXMLParser with " + productUrl.getUrlString(), e);
+        }
     }
 
 
     @Override
     public Product call() throws Exception {
         Product product = null;
-        ConnectionHandler connectionHandler = new ConnectionHandler(productURL.getUrl().toString() + ".xml");
+        ConnectionHandler connectionHandler = new ConnectionHandler(XMLURL);
         HttpURLConnection connection = connectionHandler.getConnection();
         try {
             if (connectionHandler.initiateConnection()) {

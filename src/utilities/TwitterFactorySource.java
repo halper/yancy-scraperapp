@@ -1,5 +1,8 @@
+package utilities;
+
 import twitter4j.TwitterFactory;
 import twitter4j.conf.ConfigurationBuilder;
+import utilities.NotifierProperties;
 
 /**
  * Created by alper on 1/25/17.

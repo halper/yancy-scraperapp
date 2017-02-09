@@ -1,34 +1,36 @@
+package utilities;
+
 /**
  * Created by alper on 1/19/17.
  */
 
-class NotifierProperties extends MyProperties {
+public class NotifierProperties extends MyProperties {
 
-    NotifierProperties() {
+    public NotifierProperties() {
         super("notifier");
     }
 
-    String getConsumerKey() {
+    public String getConsumerKey() {
         return getProperty("ConsumerKey");
     }
 
-    String getConsumerSecret() {
+    public String getConsumerSecret() {
         return getProperty("ConsumerSecret");
     }
 
-    String getAccessToken() {
+    public String getAccessToken() {
         return getProperty("AccessToken");
     }
 
-    String getAccessTokenSecret() {
+    public String getAccessTokenSecret() {
         return getProperty("AccessTokenSecret");
     }
 
-    String getGMailUsername() {
+    public String getGMailUsername() {
         return getProperty("GMailUsername");
     }
 
-    String getGMailPassword() {
+    public String getGMailPassword() {
         return getProperty("GMailPassword");
     }
 }

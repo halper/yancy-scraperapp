@@ -14,19 +14,11 @@ import java.security.NoSuchAlgorithmException;
 public class ConnectionHandler {
     private HttpURLConnection connection;
     private URL url;
-
-    public ConnectionHandler(String urlString) {
-
-        try {
-            this.url = new URL(urlString);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        setConnection();
-    }
+    Proxy proxy;
 
     public ConnectionHandler(URL url) {
         this.url = url;
+        this.proxy = ProxyHolder.getInstance().getProxy();
         setConnection();
     }
 
@@ -43,19 +35,22 @@ public class ConnectionHandler {
     }
 
     private HttpsURLConnection handleHttps() throws IOException {
-        return (HttpsURLConnection) url.openConnection();
-
+        return (HttpsURLConnection) getURLConnection();
     }
-    private HttpURLConnection handleHttp() throws IOException {
-        return (HttpURLConnection) url.openConnection();
 
+    private URLConnection getURLConnection() throws IOException {
+        return proxy != null ? url.openConnection(proxy) : url.openConnection();
+    }
+
+    private HttpURLConnection handleHttp() throws IOException {
+        return (HttpURLConnection) getURLConnection();
     }
 
     public HttpURLConnection getConnection() {
         return connection;
     }
 
-    public boolean initiateConnection() throws SSLException{
+    public boolean initiateConnection() throws SSLException {
         int code;
         int timeOut = 0;
         int waitFor = 4000;
@@ -80,10 +75,9 @@ public class ConnectionHandler {
         } catch (IOException e) {
             if (e instanceof SocketException) {
                 System.out.println("Socket exception for " + url);
-            } else if( e instanceof SSLException){
+            } else if (e instanceof SSLException) {
                 e.printStackTrace();
-            }
-            else {
+            } else {
                 System.out.println("Exception for " + url);
                 e.printStackTrace();
             }

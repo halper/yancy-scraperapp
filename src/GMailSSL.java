@@ -1,4 +1,5 @@
 import org.apache.log4j.Logger;
+import utilities.NotifierProperties;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;

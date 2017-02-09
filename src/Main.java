@@ -4,6 +4,8 @@ import org.xml.sax.SAXException;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import utilities.ConnectionHandler;
+import utilities.ProxyHolder;
+import utilities.TwitterFactorySource;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
@@ -20,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static java.time.temporal.ChronoUnit.DAYS;
@@ -39,9 +42,13 @@ public class Main {
     private static List<String> filters;
     private static boolean init;
     private static final Logger logger = Logger.getLogger(Main.class);
+    private static AtomicInteger banCounter;
+    private static ProxyHolder ph;
 
     public static void main(String[] args) {
         logger.info("System initialized!");
+        banCounter = new AtomicInteger(0);
+        ph = ProxyHolder.getInstance();
         ExecutorService executorService = Executors.newFixedThreadPool(500);
         init = false;
         previousProductURLsMap = new HashMap<>();
@@ -101,12 +108,42 @@ public class Main {
         getSiteUrlsFromDB();
         getFiltersFromDB();
         getProductURLsFromDB();
+        changeProxyIfRequired();
         getRecentProductURLS(executorService);
         if (!init) {
             init = true;
             List<String> productUrls = new ArrayList<>(dbProductURLsMap.keySet());
             mainMapOfProducts = getProducts(executorService, productUrls);
         }
+    }
+
+    private static void changeProxyIfRequired() {
+        Random random = new Random(System.nanoTime());
+        if(!init)
+            changeProxy();
+        else if(banned())
+            changeProxy();
+        else if (random.nextInt(100) % 7 == 0)
+            changeProxy();
+    }
+
+    private static void changeProxy() {
+        String sql = "SELECT host, port FROM proxies";
+        try (Connection connection = DataSource.getInstance().getBds().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
+            while (rs.next()) {
+                String host = rs.getString("host");
+                int port = rs.getInt("port");
+                ph.setProxy(host, port);
+            }
+        } catch (SQLException e) {
+            logger.error("SQL Error for change proxy!\n", e);
+        }
+    }
+
+    private static boolean banned() {
+        return banCounter.get() >= siteURLs.size()*0.8;
     }
 
     private static void getRecentProductURLS(ExecutorService executorService) {
@@ -422,7 +459,10 @@ public class Main {
 
         URLWorker(String url) {
             try {
-                this.url = new URL(url + "/sitemap_products_1.xml");
+                url += (url.charAt(url.length()-1) != '/' ?
+                        "/" : "") + "sitemap_products_1.xml";
+
+                this.url = new URL(url);
             } catch (MalformedURLException e) {
                 logger.error("Malformed URL! " + url, e);
             }
@@ -441,8 +481,10 @@ public class Main {
             } catch (IOException e) {
                 if (e instanceof MalformedByteSequenceException) {
                     logger.warn("MalformedByteException for " + url);
-                } else
+                } else{
                     logger.error(url + " IOexception!!!", e);
+                    banCounter.getAndIncrement();
+                }
                 Thread.sleep(1000);
                 if (!(e instanceof SSLException || e instanceof MalformedByteSequenceException))
                     call();

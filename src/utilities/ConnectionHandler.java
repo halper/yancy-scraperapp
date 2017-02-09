@@ -1,5 +1,7 @@
 package utilities;
 
+import org.apache.log4j.Logger;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -15,6 +17,7 @@ public class ConnectionHandler {
     private HttpURLConnection connection;
     private URL url;
     Proxy proxy;
+    private static final Logger logger = Logger.getLogger(ConnectionHandler.class);
 
     public ConnectionHandler(URL url) {
         this.url = url;
@@ -53,7 +56,7 @@ public class ConnectionHandler {
     public boolean initiateConnection() throws SSLException {
         int code;
         int timeOut = 0;
-        int waitFor = 4000;
+        int waitFor = 8000;
         int maxTimeoutTrial = 3;
 
         connection.setRequestProperty("Connection", "keep-alive");
@@ -68,18 +71,17 @@ public class ConnectionHandler {
         } catch (SocketTimeoutException e) {
             timeOut++;
             if (timeOut >= maxTimeoutTrial) {
-                System.out.println("Timeout exception for " + url);
+                logger.error("Timeout exception for " + url);
                 connection.disconnect();
                 return false;
             }
         } catch (IOException e) {
             if (e instanceof SocketException) {
-                System.out.println("Socket exception for " + url);
+                logger.error("Socket exception for " + url);
             } else if (e instanceof SSLException) {
-                e.printStackTrace();
+                logger.error("SSLException for " + url);
             } else {
-                System.out.println("Exception for " + url);
-                e.printStackTrace();
+                logger.error("Exception for " + url, e);
             }
             connection.disconnect();
         }

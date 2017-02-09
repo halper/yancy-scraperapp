@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.concurrent.Callable;
 
@@ -16,7 +17,7 @@ import java.util.concurrent.Callable;
 class ProductXMLParser implements Callable {
     private ProductURL productURL;
     private URL XMLURL;
-    private static final Logger logger = Logger.getLogger( ProductXMLParser.class );
+    private static final Logger logger = Logger.getLogger(ProductXMLParser.class);
 
 
     ProductXMLParser(ProductURL productUrl) {
@@ -44,11 +45,17 @@ class ProductXMLParser implements Callable {
             }
         } catch (IOException e) {
             product = null;
-            logger.error("IOException", e);
+            if (e instanceof SocketTimeoutException) {
+                logger.error("SocketTimeOutException for " + productURL.getUrlString());
+            } else if (e.toString().contains("HTTP/1.1 503")) {
+                logger.error("Tunneling error on " + productURL.getUrlString());
+            }
+            else{
+                logger.error("IOException", e);
+            }
         } catch (NullPointerException | SAXException s) {
             logger.error("Exception for " + productURL.getUrl(), s);
-        }
-        finally {
+        } finally {
             connection.disconnect();
             connection = null;
         }

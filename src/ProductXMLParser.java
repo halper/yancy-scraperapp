@@ -1,17 +1,10 @@
 import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import utilities.ConnectionHandler;
 
-import javax.net.ssl.SSLException;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.concurrent.Callable;
 
 /**

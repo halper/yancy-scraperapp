@@ -1,24 +1,11 @@
-import org.apache.log4j.Logger;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Properties;
-
 /**
  * Created by alper on 1/19/17.
  */
 
-class NotifierProperties extends Properties {
-    private static final Logger logger = Logger.getLogger( NotifierProperties.class );
+class NotifierProperties extends MyProperties {
 
     NotifierProperties() {
-        FileInputStream fis;
-        try {
-            fis = new FileInputStream("notifier.properties");
-            load(fis);
-        } catch (IOException e) {
-            logger.error("IOException", e);
-        }
+        super("notifier");
     }
 
     String getConsumerKey() {

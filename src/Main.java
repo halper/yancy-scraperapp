@@ -53,7 +53,7 @@ public class Main {
         init = false;
         previousProductURLsMap = new HashMap<>();
         while (true) {
-            initFromDB(executorService);
+            initScraper(executorService);
             checkForModifiedProductURLsMap(executorService);
             removeNonExistingProductURLs();
             System.gc();
@@ -104,7 +104,7 @@ public class Main {
         return true;
     }
 
-    private static void initFromDB(ExecutorService executorService) {
+    private static void initScraper(ExecutorService executorService) {
         getSiteUrlsFromDB();
         getFiltersFromDB();
         getProductURLsFromDB();
@@ -119,16 +119,16 @@ public class Main {
 
     private static void changeProxyIfRequired() {
         Random random = new Random(System.nanoTime());
-        if(!init)
+        if (!init)
             changeProxy();
-        else if(banned())
+        else if (banned())
             changeProxy();
         else if (random.nextInt(100) % 7 == 0)
             changeProxy();
     }
 
     private static void changeProxy() {
-        String sql = "SELECT host, port FROM proxies";
+        String sql = "SELECT host, port FROM proxies ORDER BY RAND() LIMIT 1";
         try (Connection connection = DataSource.getInstance().getBds().getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet rs = statement.executeQuery()) {
@@ -136,6 +136,7 @@ public class Main {
                 String host = rs.getString("host");
                 int port = rs.getInt("port");
                 ph.setProxy(host, port);
+                logger.info("Proxy has set to: " + host + ":" + port);
             }
         } catch (SQLException e) {
             logger.error("SQL Error for change proxy!\n", e);
@@ -143,7 +144,7 @@ public class Main {
     }
 
     private static boolean banned() {
-        return banCounter.get() >= siteURLs.size()*0.8;
+        return banCounter.get() >= siteURLs.size() * 0.8;
     }
 
     private static void getRecentProductURLS(ExecutorService executorService) {
@@ -459,7 +460,7 @@ public class Main {
 
         URLWorker(String url) {
             try {
-                url += (url.charAt(url.length()-1) != '/' ?
+                url += (url.charAt(url.length() - 1) != '/' ?
                         "/" : "") + "sitemap_products_1.xml";
 
                 this.url = new URL(url);
@@ -481,7 +482,7 @@ public class Main {
             } catch (IOException e) {
                 if (e instanceof MalformedByteSequenceException) {
                     logger.warn("MalformedByteException for " + url);
-                } else{
+                } else {
                     logger.error(url + " IOexception!!!", e);
                     banCounter.getAndIncrement();
                 }

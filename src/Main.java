@@ -113,7 +113,7 @@ public class Main {
         getProductURLsFromDB();
         changeProxyIfRequired();
         getRecentProductURLS(executorService);
-        if(banned()) initScraper(executorService);
+        if (banned()) initScraper(executorService);
         if (!init) {
             init = true;
             List<String> productUrls = new ArrayList<>(dbProductURLsMap.keySet());
@@ -132,7 +132,7 @@ public class Main {
     }
 
     private static void changeProxy() {
-        if(init && banned()) {
+        if (init && banned()) {
             badProxies.add(ProxyHolder.getInstance().getProxy());
         }
         String sql = "SELECT host, port FROM proxies ORDER BY RAND() LIMIT 1";
@@ -150,7 +150,7 @@ public class Main {
         } catch (SQLException e) {
             logger.error("SQL Error for change proxy!\n", e);
         }
-        if(badProxies.contains(ProxyHolder.getInstance().getProxy()))
+        if (badProxies.contains(ProxyHolder.getInstance().getProxy()))
             changeProxy();
     }
 
@@ -327,7 +327,7 @@ public class Main {
                 if (modifiedText != null) {
                     logger.info("Modified product found!" + newProduct.getTitle() + "-" + newProduct.getUrl());
                     sendTweet(newProduct, modifiedText);
-                    sendModifiedProductMail(newProduct, modifiedText);
+                    // sendModifiedProductMail(newProduct, modifiedText);
                 }
                 mainMapOfProducts.put(aLong, newProduct);
             }
@@ -347,7 +347,7 @@ public class Main {
             int i = 0;
             for (Product product : newProductsMap.values()) {
                 sendTweet(product, "New product ");
-                sendNewProductMail(product);
+                //sendNewProductMail(product);
                 if (++i % 10 == 0) {
                     try {
                         Thread.sleep(10000);
@@ -493,13 +493,11 @@ public class Main {
             } catch (IOException e) {
                 if (e instanceof MalformedByteSequenceException) {
                     logger.warn("MalformedByteException for " + url);
+                    call();
                 } else {
                     logger.error(url + " IOexception!!!", e);
                     banCounter.getAndIncrement();
                 }
-                Thread.sleep(1000);
-                if (!(e instanceof SSLException || e instanceof MalformedByteSequenceException))
-                    call();
             } finally {
                 connection.disconnect();
                 connection = null;

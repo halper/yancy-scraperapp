@@ -53,7 +53,7 @@ public class ConnectionHandler {
         return connection;
     }
 
-    public boolean initiateConnection() throws SSLException {
+    public boolean initiateConnection() throws IOException {
         int code;
         int timeOut = 0;
         int waitFor = 8000;
@@ -75,15 +75,6 @@ public class ConnectionHandler {
                 connection.disconnect();
                 return false;
             }
-        } catch (IOException e) {
-            if (e instanceof SocketException) {
-                logger.error("Socket exception for " + url);
-            } else if (e instanceof SSLException) {
-                logger.error("SSLException for " + url);
-            } else {
-                logger.error("Exception for " + url, e);
-            }
-            connection.disconnect();
         }
         return true;
     }
